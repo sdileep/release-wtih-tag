@@ -1,0 +1,36 @@
+name: Deploy
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    permissions: write-all
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          # NX needs to fetch all branches and commits so that Nx affected has a base to compare against
+          fetch-depth: 0
+
+      - name: Retrieve commit sha of last two tags
+        id: get_commit_shas
+        run: |
+          # Get the last two tags
+          tags=$(git tag --sort=-creatordate | head -n 2)
+          # Get the commit sha of the last two tags
+          commit_shas=$(git rev-list -n 2 $tags)
+          # Set the output variables
+          echo "::set-output name=commit_sha::$commit_shas"
+          # Set env variables for use in the next step, one for each tag: latest as HEAD and the older as BASE
+          echo "::set-env name=BASE_SHA::$(echo $commit_shas | cut -d' ' -f1)"
+          echo "::set-env name=HEAD_SHA::$(echo $commit_shas | cut -d' ' -f2)"
+
+      - name: print env variables
+        run: |
+          echo "BASE_SHA: $BASE_SHA"
+          echo "HEAD_SHA: $HEAD_SHA"
