@@ -20,13 +20,63 @@ jobs:
           # NX needs to fetch all branches and commits so that Nx affected has a base to compare against
           fetch-depth: 0
 
-      - name: Create tag
-        uses: actions/github-script@v7
-        with:
-          script: |
-            github.rest.git.createRef({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              ref: `refs/tags/${{ github.event.inputs.tag }}`,
-              sha: context.sha
-            })
+      - name: Retrieve commit sha of last tag
+        id: get_commit_shas
+        run: |
+          # Get the last tag
+          last_tag=$(git tag --sort=-creatordate | head -n 1)
+          # Get the commit sha of the last tag
+          base_sha=$(git rev-list -n 1 $last_tag)
+          echo "$base_sha"
+          echo "echo BASE_SHA=$(echo $base_sha)" >> $GITHUB_ENV
+          echo "echo HEAD_SHA=$(echo $GITHUB_SHA )" >> $GITHUB_ENV
+
+      - name: print env variables
+        run: |
+          echo "BASE_SHA: $BASE_SHA"
+          echo "HEAD_SHA: $HEAD_SHA"
+
+      # - name: Create tag
+      #   uses: actions/github-script@v7
+      #   with:
+      #     script: |
+      #       github.rest.git.createRef({
+      #         owner: context.repo.owner,
+      #         repo: context.repo.repo,
+      #         ref: `refs/tags/${{ github.event.inputs.tag }}`,
+      #         sha: context.sha
+      #       })
+
+      # - name: global git config
+      #   run: |
+      #     git config --global user.name "GitHub Action Release Workflow"
+      #     git config --global user.email "no-reply@gmail.com"
+
+      # - name: create tag
+      #   run: |
+      #     git tag -a ${{ github.event.inputs.tag }} -m "Release ${{ github.event.inputs.tag }}"
+      #     git push origin ${{ github.event.inputs.tag }}
+
+      # - name: Retrieve commit sha of last two tags
+      #   id: get_commit_shas
+      #   run: |
+      #     # Get the last two tags
+      #     tags=$(git tag --sort=-creatordate | head -n 2)
+      #     # Get the commit sha of the last two tags
+      #     commit_shas=$(git rev-list -n 2 $tags)
+      #     echo "$commit_shas"
+      #     # Set the output variables
+      #     # echo "::set-output name=commit_sha::$commit_shas"
+      #     # Set env variables for use in the next step, one for each tag: latest as HEAD and the older as BASE
+      #     echo "echo BASE_SHA=$(echo $commit_shas | cut -d' ' -f1)" >> $GITHUB_ENV
+      #     echo "echo HEAD_SHA=$(echo $commit_shas | cut -d' ' -f2)" >> $GITHUB_ENV
+
+      # - name: print env variables
+      #   run: |
+      #     echo "BASE_SHA: $BASE_SHA"
+      #     echo "HEAD_SHA: $HEAD_SHA"
+
+      - name: Install Dependencies
+        if: github.ref_type == 'tag'
+        run: |
+          echo "Installing dependencies"
