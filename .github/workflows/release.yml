@@ -11,7 +11,7 @@ jobs:
   release:
     name: Release
     runs-on: ubuntu-latest
-    permissions: write-all
+    # permissions: write-all
 
     steps:
       - name: Checkout Repository
@@ -76,7 +76,15 @@ jobs:
       #     echo "BASE_SHA: $BASE_SHA"
       #     echo "HEAD_SHA: $HEAD_SHA"
 
-      - name: Install Dependencies
-        if: github.ref_type == 'tag'
-        run: |
-          echo "Installing dependencies"
+      # - name: Install Dependencies
+      #   if: github.ref_type == 'tag'
+      #   run: |
+      #     echo "Installing dependencies"
+
+  tag-release:
+    name: Tag Release
+    uses: ./.github/workflows/tag.yml
+    needs: release
+    permissions: write-all
+    with:
+      tag: ${{ github.event.inputs.tag }}

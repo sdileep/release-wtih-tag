@@ -1,0 +1,50 @@
+name: Tag
+
+on:
+  # push:
+  #   tags:
+  #     - '*'
+  # - 'v*.*.*'
+  # workflow_dispatch:
+
+  # workflow_run:
+  #   workflows: ['Release']
+  #   types:
+  #     - completed
+
+  workflow_call:
+    inputs:
+      tag:
+        description: 'Tag'
+        type: string
+        required: true
+
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag'
+        required: true
+
+jobs:
+  deploy:
+    name: Tag
+    runs-on: ubuntu-latest
+    permissions: write-all
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          # NX needs to fetch all branches and commits so that Nx affected has a base to compare against
+          fetch-depth: 0
+
+      - name: Create tag
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.git.createRef({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: `refs/tags/${{ github.event.inputs.tag }}`,
+              sha: context.sha
+            })
